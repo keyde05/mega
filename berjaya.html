@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+<title>Pendaftaran Berjaya</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="page" id="page" hidden>
+
+  <a class="brand-bar" href="index.html">
+    <img src="logo.png" alt="Logo kelab">
+    <span class="brand-bar-text">
+      <strong>Mega Proton Attack</strong>
+      <span>Mega Proton Members &middot; N9 Attack 2026</span>
+    </span>
+  </a>
+
+  <header class="hero">
+    <div class="success-icon">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+    </div>
+    <p class="eyebrow">Pendaftaran Berjaya</p>
+    <h1 id="nama-peserta"></h1>
+    <p class="hero-desc" id="ringkasan-pakej"></p>
+    <span class="status-chip" id="status-peserta"></span>
+  </header>
+
+  <div class="summary-block" id="butiran-bayaran"></div>
+
+  <section aria-label="Senarai peserta">
+    <div class="section-head">
+      <h2 class="section-title" id="tajuk-kumpulan">Senarai</h2>
+      <p class="section-sub" id="sub-kumpulan"></p>
+    </div>
+
+    <div class="table-wrap">
+      <table class="reg-table">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama</th>
+            <th>Pakej</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="badan-jadual">
+          <tr><td colspan="4" class="empty-state">Memuatkan...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <a class="back-link" href="index.html">&larr; Kembali ke kategori</a>
+
+</div>
+
+<script type="module">
+  import { db } from './firebase-app.js';
+  import { KATEGORI, semuaKumpulan } from './kategori.js';
+  import { doc, getDoc, collection, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+  }
+
+  function pakejLabel(row) {
+    const label = KATEGORI[row.kategori]?.label ?? row.kategori;
+    return row.subkategori ? `${label} — ${row.subkategori}` : label;
+  }
+
+  // Kombo termasuk kehadiran asas, jadi kalau no. telefon sama muncul untuk sijil
+  // DAN kombo, papar kombo sahaja supaya nama tak berulang dalam senarai.
+  const KEUTAMAAN_PAKEJ = { kombo: 2, sijil: 1, terbuka: 1 };
+
+  function nyahduplikatIkutTelefon(dokumen) {
+    const terpilih = new Map();
+    const tiadaTelefon = [];
+
+    for (const docSnap of dokumen) {
+      const row = docSnap.data();
+      if (!row.telefon) {
+        tiadaTelefon.push(docSnap);
+        continue;
+      }
+      const sediaAda = terpilih.get(row.telefon);
+      if (!sediaAda || (KEUTAMAAN_PAKEJ[row.kategori] ?? 0) > (KEUTAMAAN_PAKEJ[sediaAda.data().kategori] ?? 0)) {
+        terpilih.set(row.telefon, docSnap);
+      }
+    }
+
+    return [...terpilih.values(), ...tiadaTelefon].sort(
+      (a, b) => (b.data().dibuat_pada?.toMillis() ?? 0) - (a.data().dibuat_pada?.toMillis() ?? 0)
+    );
+  }
+
+  async function utama() {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    if (!id) {
+      location.href = 'index.html';
+      return;
+    }
+
+    const daftarSnap = await getDoc(doc(db, 'pendaftaran', id));
+    if (!daftarSnap.exists() || !KATEGORI[daftarSnap.data().kategori]) {
+      location.href = 'index.html';
+      return;
+    }
+
+    const daftar = daftarSnap.data();
+    const k = KATEGORI[daftar.kategori];
+    const kumpulan = semuaKumpulan();
+    const grup = kumpulan[k.kumpulan];
+
+    document.title = 'Pendaftaran Berjaya';
+    document.getElementById('nama-peserta').textContent = daftar.nama;
+    document.getElementById('ringkasan-pakej').textContent = `${pakejLabel(daftar)} · RM ${k.harga}`;
+
+    function papar_status(el, sudahBayar) {
+      el.className = `status-chip ${sudahBayar ? 'dah' : 'belum'}`;
+      el.textContent = `Status: ${sudahBayar ? 'Dah Bayar' : 'Belum Bayar'}`;
+    }
+    papar_status(document.getElementById('status-peserta'), daftar.status === 'dah bayar');
+
+    const baris = (label, value) => `<div class="row"><dt>${label}</dt><dd>${value}</dd></div>`;
+    let butiranHtml = '<p class="section-sub" style="margin-bottom:6px;">Buat bayaran ke akaun berikut, kemudian tunggu admin sahkan status anda.</p>';
+    if (k.bank) butiranHtml += baris('Bank', k.bank);
+    if (k.namaAkaun) butiranHtml += baris('Nama Akaun', k.namaAkaun);
+    butiranHtml += baris('No. Akaun', `<span class="mono">${k.noAkaun}</span>`);
+    if (k.nota) butiranHtml += baris('Nota', k.nota);
+    document.getElementById('butiran-bayaran').innerHTML = butiranHtml;
+
+    document.getElementById('tajuk-kumpulan').textContent = `Senarai ${grup.label}`;
+    document.getElementById('page').hidden = false;
+
+    const badanJadual = document.getElementById('badan-jadual');
+    const subKumpulan = document.getElementById('sub-kumpulan');
+
+    const q = query(
+      collection(db, 'pendaftaran'),
+      where('kategori', 'in', grup.slugs)
+    );
+
+    onSnapshot(q, (snapshot) => {
+      const dokumen = nyahduplikatIkutTelefon(snapshot.docs);
+      subKumpulan.textContent = `Anda dan ${Math.max(0, dokumen.length - 1)} peserta lain yang telah mendaftar.`;
+
+      if (dokumen.length === 0) {
+        badanJadual.innerHTML = '<tr><td colspan="4" class="empty-state">Tiada pendaftaran lagi.</td></tr>';
+        return;
+      }
+
+      badanJadual.innerHTML = dokumen.map((docSnap, i) => {
+        const row = docSnap.data();
+        const iniAnda = docSnap.id === id || (daftar.telefon && row.telefon === daftar.telefon);
+        const sudahBayar = row.status === 'dah bayar';
+        return `
+          <tr${iniAnda ? ' class="is-you"' : ''}>
+            <td>${i + 1}</td>
+            <td class="nama">${escapeHtml(row.nama)}${iniAnda ? ' <span class="you-tag">(Anda)</span>' : ''}</td>
+            <td data-label="Pakej">${escapeHtml(pakejLabel(row))}</td>
+            <td data-label="Status"><span class="status-chip ${sudahBayar ? 'dah' : 'belum'}">${sudahBayar ? 'Dah Bayar' : 'Belum Bayar'}</span></td>
+          </tr>
+        `;
+      }).join('');
+    });
+  }
+
+  utama();
+</script>
+
+</body>
+</html>

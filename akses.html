@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+<title>Log Masuk Admin</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="page narrow">
+  <a class="brand-bar" href="index.html">
+    <img src="logo.png" alt="Logo kelab">
+    <span class="brand-bar-text">
+      <strong>Mega Proton Attack</strong>
+      <span>Mega Proton Members &middot; N9 Attack 2026</span>
+    </span>
+  </a>
+  <div class="login-wrap">
+    <div class="login-card">
+      <header class="hero">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        </div>
+        <p class="eyebrow">Mega Proton Attack</p>
+        <h1 style="font-size:32px;">Log Masuk Admin</h1>
+      </header>
+
+      <p class="alert alert-error" id="ralat" hidden></p>
+
+      <form class="form-card" id="borang-login">
+        <div class="field">
+          <label for="email">Emel</label>
+          <input type="email" id="email" name="email" required autocomplete="username">
+        </div>
+        <div class="field">
+          <label for="password">Kata Laluan</label>
+          <input type="password" id="password" name="password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="btn-login">Log Masuk</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { auth } from './firebase-app.js';
+  import { onAuthStateChanged, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) location.href = 'senarai.html';
+  });
+
+  const borang = document.getElementById('borang-login');
+  const ralatEl = document.getElementById('ralat');
+  const btnLogin = document.getElementById('btn-login');
+
+  const MESEJ_RALAT = {
+    'auth/invalid-email': 'Format emel tidak sah.',
+    'auth/invalid-credential': 'Emel atau kata laluan salah.',
+    'auth/wrong-password': 'Emel atau kata laluan salah.',
+    'auth/user-not-found': 'Emel atau kata laluan salah.',
+    'auth/too-many-requests': 'Terlalu banyak percubaan. Sila cuba sebentar lagi.',
+  };
+
+  borang.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    ralatEl.hidden = true;
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    btnLogin.disabled = true;
+    btnLogin.textContent = 'Log masuk...';
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      location.href = 'senarai.html';
+    } catch (err) {
+      console.error(err);
+      ralatEl.textContent = MESEJ_RALAT[err.code] || 'Log masuk gagal. Sila cuba sekali lagi.';
+      ralatEl.hidden = false;
+      btnLogin.disabled = false;
+      btnLogin.textContent = 'Log Masuk';
+    }
+  });
+</script>
+
+</body>
+</html>

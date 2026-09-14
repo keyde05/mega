@@ -1,0 +1,39 @@
+rules_version = '2';
+
+// Salin kandungan fail ini ke Firebase Console > Firestore Database > Rules, lepas tu Publish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /pendaftaran/{docId} {
+      // Sesiapa boleh baca senarai peserta (untuk papar jadual kehadiran secara terbuka).
+      allow read: if true;
+
+      // Sesiapa boleh daftar, tapi data mesti ikut bentuk yang dibenarkan sahaja --
+      // ini gantikan semakan borang di server dalam versi PHP dulu.
+      allow create: if request.resource.data.keys().hasOnly(['nama', 'telefon', 'kategori', 'status', 'dibuat_pada', 'subkategori'])
+                    && request.resource.data.nama is string
+                    && request.resource.data.nama.size() > 0
+                    && request.resource.data.nama.size() <= 120
+                    && request.resource.data.telefon is string
+                    && request.resource.data.telefon.matches('^[0-9]{9,12}$')
+                    && request.resource.data.kategori in ['sijil', 'terbuka', 'kombo']
+                    && request.resource.data.status == 'belum bayar'
+                    // 'terbuka' wajib ada subkategori yang sah; kategori lain tak boleh ada subkategori langsung.
+                    && (
+                      request.resource.data.kategori == 'terbuka'
+                        ? request.resource.data.subkategori in [
+                            'Open Standart Modified', 'Open Modified', 'Open Engine Bay N/A',
+                            'Open Engine Bay Turbo', 'Open Engine Bay S/Cam', 'Open Interior',
+                            'Open Colour', 'Open JDM', 'Open MDM', 'Open Ladiescar', 'Open MPV/SUV',
+                            'Open Wira', 'Open Putra', 'Open Satria/Neo', 'Open Persona/Gen2',
+                            'Open Saga', 'Open Iswara', 'Open Waja', 'Open Arena', 'Open Preve',
+                            'Open Perdana', 'Open Inspira', 'Open Race Look', 'Open S70', 'Open X50',
+                            'Open X70', 'Open X90', 'Pop & Bang'
+                          ]
+                        : !('subkategori' in request.resource.data)
+                    );
+
+      // Hanya admin yang log masuk (Firebase Authentication) boleh tukar status atau padam.
+      allow update, delete: if request.auth != null;
+    }
+  }
+}

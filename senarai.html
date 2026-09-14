@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+<title>Senarai Pendaftaran</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="page" id="page" hidden>
+
+  <a class="brand-bar" href="index.html">
+    <img src="logo.png" alt="Logo kelab">
+    <span class="brand-bar-text">
+      <strong>Mega Proton Attack</strong>
+      <span>Mega Proton Members &middot; N9 Attack 2026</span>
+    </span>
+  </a>
+
+  <div class="top-bar">
+    <header class="hero" style="gap:6px;">
+      <p class="eyebrow">Admin</p>
+      <h1 style="font-size:32px;">Senarai Pendaftaran</h1>
+    </header>
+    <button type="button" class="btn btn-ghost btn-small" id="btn-logout">Log Keluar</button>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-tile">
+      <span class="stat-label">Jumlah Pendaftaran</span>
+      <span class="stat-value" id="stat-jumlah">0</span>
+    </div>
+    <div class="stat-tile paid">
+      <span class="stat-label">Dah Bayar</span>
+      <span class="stat-value" id="stat-dah-bayar">0</span>
+    </div>
+    <div class="stat-tile">
+      <span class="stat-label">Belum Bayar</span>
+      <span class="stat-value" id="stat-belum-bayar">0</span>
+    </div>
+  </div>
+
+  <div class="filter-tabs" id="filter-tabs"></div>
+
+  <div class="table-wrap">
+    <table class="reg-table">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Nama</th>
+          <th>No. Telefon</th>
+          <th>Pakej</th>
+          <th>Tarikh Daftar</th>
+          <th>Status</th>
+          <th>Tindakan</th>
+        </tr>
+      </thead>
+      <tbody id="badan-jadual">
+        <tr><td colspan="6" class="empty-state">Memuatkan...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script type="module">
+  import { auth, db } from './firebase-app.js';
+  import { KATEGORI, semuaKumpulan } from './kategori.js';
+  import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
+  import { collection, doc, onSnapshot, orderBy, query, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      location.href = 'akses.html';
+      return;
+    }
+    document.getElementById('page').hidden = false;
+    mulakan();
+  });
+
+  document.getElementById('btn-logout').addEventListener('click', async () => {
+    await signOut(auth);
+    location.href = 'akses.html';
+  });
+
+  function mulakan() {
+    const kumpulan = semuaKumpulan();
+    const tabs = Object.entries(kumpulan).map(([id, g]) => ({ id, label: g.label }));
+
+    const params = new URLSearchParams(location.search);
+    let filter = params.get('kumpulan') || tabs[0]?.id;
+    if (!kumpulan[filter]) filter = tabs[0]?.id;
+
+    const filterTabs = document.getElementById('filter-tabs');
+    filterTabs.innerHTML = tabs.map((tab) => {
+      const href = `senarai.html?kumpulan=${encodeURIComponent(tab.id)}`;
+      const active = tab.id === filter ? ' class="active"' : '';
+      return `<a${active} href="${href}">${escapeHtml(tab.label)}</a>`;
+    }).join('');
+
+    const badanJadual = document.getElementById('badan-jadual');
+    const statJumlah = document.getElementById('stat-jumlah');
+    const statDahBayar = document.getElementById('stat-dah-bayar');
+    const statBelumBayar = document.getElementById('stat-belum-bayar');
+
+    const q = query(collection(db, 'pendaftaran'), orderBy('dibuat_pada', 'desc'));
+
+    onSnapshot(q, (snapshot) => {
+      const semua = snapshot.docs;
+      const dahBayarKira = semua.filter((d) => d.data().status === 'dah bayar').length;
+      statJumlah.textContent = semua.length;
+      statDahBayar.textContent = dahBayarKira;
+      statBelumBayar.textContent = semua.length - dahBayarKira;
+
+      const dipaparkan = semua.filter((d) => kumpulan[filter].slugs.includes(d.data().kategori));
+
+      if (dipaparkan.length === 0) {
+        badanJadual.innerHTML = '<tr><td colspan="7" class="empty-state">Tiada pendaftaran lagi.</td></tr>';
+        return;
+      }
+
+      badanJadual.innerHTML = dipaparkan.map((docSnap, i) => {
+        const row = docSnap.data();
+        const id = docSnap.id;
+        const sudahBayar = row.status === 'dah bayar';
+        const tarikh = row.dibuat_pada?.toDate ? row.dibuat_pada.toDate().toLocaleString('ms-MY') : '-';
+
+        const btnStatus = sudahBayar
+          ? `<button type="button" class="btn btn-ghost btn-small" data-action="belum" data-id="${id}">Batal</button>`
+          : `<button type="button" class="btn btn-primary btn-small" data-action="dah" data-id="${id}">OK &mdash; Dah Bayar</button>`;
+
+        return `
+          <tr>
+            <td>${i + 1}</td>
+            <td class="nama">${escapeHtml(row.nama)}</td>
+            <td class="mono" data-label="No. Telefon">${escapeHtml(row.telefon ?? '-')}</td>
+            <td data-label="Pakej">${escapeHtml(pakejLabel(row))}</td>
+            <td class="mono" data-label="Tarikh Daftar">${escapeHtml(tarikh)}</td>
+            <td data-label="Status"><span class="status-chip ${sudahBayar ? 'dah' : 'belum'}">${sudahBayar ? 'Dah Bayar' : 'Belum Bayar'}</span></td>
+            <td>
+              <div class="action-group">
+                ${btnStatus}
+                <button type="button" class="btn btn-danger btn-small" data-action="padam" data-id="${id}" data-nama="${escapeAttr(row.nama)}">Padam</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    });
+
+    badanJadual.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+
+      if (action === 'dah' || action === 'belum') {
+        btn.disabled = true;
+        try {
+          await updateDoc(doc(db, 'pendaftaran', id), { status: action === 'dah' ? 'dah bayar' : 'belum bayar' });
+        } catch (err) {
+          console.error(err);
+          alert('Gagal kemaskini status. Sila cuba sekali lagi.');
+          btn.disabled = false;
+        }
+      } else if (action === 'padam') {
+        const nama = btn.dataset.nama;
+        if (!confirm(`Padam pendaftaran "${nama}"? Tindakan ini tidak boleh diundur.`)) return;
+        btn.disabled = true;
+        try {
+          await deleteDoc(doc(db, 'pendaftaran', id));
+        } catch (err) {
+          console.error(err);
+          alert('Gagal padam pendaftaran. Sila cuba sekali lagi.');
+          btn.disabled = false;
+        }
+      }
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+  }
+  function escapeAttr(str) {
+    return escapeHtml(str);
+  }
+  function pakejLabel(row) {
+    const label = KATEGORI[row.kategori]?.label ?? row.kategori;
+    return row.subkategori ? `${label} — ${row.subkategori}` : label;
+  }
+</script>
+
+</body>
+</html>

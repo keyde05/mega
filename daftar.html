@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+<title>Daftar &mdash; Mega Proton Attack</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="page narrow">
+
+  <a class="brand-bar" href="index.html">
+    <img src="logo.png" alt="Logo kelab">
+    <span class="brand-bar-text">
+      <strong>Mega Proton Attack</strong>
+      <span>Mega Proton Members &middot; N9 Attack 2026</span>
+    </span>
+  </a>
+
+  <a class="back-link" href="index.html">&larr; Kembali ke kategori</a>
+
+  <header class="hero">
+    <p class="eyebrow">Pendaftaran</p>
+    <h1 id="tajuk">&hellip;</h1>
+  </header>
+
+  <div class="summary-block" id="ringkasan"></div>
+  <p class="tier-note" id="nota" hidden></p>
+
+  <p class="alert alert-error" id="ralat" hidden></p>
+
+  <form class="form-card" id="borang" hidden>
+    <div class="field" id="medan-subkategori" hidden>
+      <label for="subkategori">Pilih Kategori</label>
+      <select id="subkategori" name="subkategori">
+        <option value="" disabled selected>&mdash; Pilih kategori pertandingan &mdash;</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="nama">Nama Penuh</label>
+      <input type="text" id="nama" name="nama" required maxlength="120" autocomplete="name">
+    </div>
+    <div class="field">
+      <label for="telefon">No. Telefon</label>
+      <input type="tel" id="telefon" name="telefon" required inputmode="numeric" maxlength="12" placeholder="0123456789" autocomplete="tel">
+    </div>
+    <button type="submit" class="btn btn-primary btn-block" id="btn-hantar">Hantar Pendaftaran</button>
+  </form>
+
+</div>
+
+<script type="module">
+  import { db } from './firebase-app.js';
+  import { KATEGORI } from './kategori.js';
+  import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+
+  const params = new URLSearchParams(location.search);
+  const slug = params.get('kategori');
+  const k = KATEGORI[slug];
+
+  if (!k) {
+    location.href = 'index.html';
+  } else {
+    document.title = `Daftar — ${k.label}`;
+    document.getElementById('tajuk').textContent = k.label;
+
+    const baris = (label, value) => `<div class="row"><dt>${label}</dt><dd>${value}</dd></div>`;
+    let ringkasanHtml = baris('Yuran', `<span class="mono">RM ${k.harga}</span>`);
+    if (k.bank) ringkasanHtml += baris('Bank', k.bank);
+    if (k.namaAkaun) ringkasanHtml += baris('Nama Akaun', k.namaAkaun);
+    ringkasanHtml += baris('No. Akaun', `<span class="mono">${k.noAkaun}</span>`);
+    if (k.tutup) ringkasanHtml += baris('Tarikh Tutup', k.tutup);
+    document.getElementById('ringkasan').innerHTML = ringkasanHtml;
+
+    if (k.nota) {
+      const notaEl = document.getElementById('nota');
+      notaEl.textContent = k.nota;
+      notaEl.hidden = false;
+    }
+
+    if (k.subKategori && k.subKategori.length > 0) {
+      const select = document.getElementById('subkategori');
+      for (const pilihan of k.subKategori) {
+        const opt = document.createElement('option');
+        opt.value = pilihan;
+        opt.textContent = pilihan;
+        select.appendChild(opt);
+      }
+      select.required = true;
+      document.getElementById('medan-subkategori').hidden = false;
+    }
+
+    document.getElementById('borang').hidden = false;
+  }
+
+  const borang = document.getElementById('borang');
+  const ralatEl = document.getElementById('ralat');
+  const btnHantar = document.getElementById('btn-hantar');
+  const telefonEl = document.getElementById('telefon');
+
+  function tunjukRalat(mesej) {
+    ralatEl.textContent = mesej;
+    ralatEl.hidden = false;
+  }
+
+  telefonEl.addEventListener('input', () => {
+    const kedudukan = telefonEl.selectionStart;
+    const panjangSebelum = telefonEl.value.length;
+    telefonEl.value = telefonEl.value.replace(/[^0-9]/g, '');
+    const bezaPanjang = panjangSebelum - telefonEl.value.length;
+    telefonEl.setSelectionRange(kedudukan - bezaPanjang, kedudukan - bezaPanjang);
+  });
+
+  borang.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    ralatEl.hidden = true;
+
+    const nama = document.getElementById('nama').value.trim();
+    if (nama === '') {
+      tunjukRalat('Sila isi nama penuh anda.');
+      return;
+    }
+    if (nama.length > 120) {
+      tunjukRalat('Nama terlalu panjang.');
+      return;
+    }
+
+    const telefon = telefonEl.value.replace(/[^0-9]/g, '');
+    if (telefon.length < 9 || telefon.length > 12) {
+      tunjukRalat('Sila isi no. telefon yang sah (tanpa "-").');
+      return;
+    }
+
+    let subkategori = null;
+    if (k.subKategori && k.subKategori.length > 0) {
+      subkategori = document.getElementById('subkategori').value;
+      if (!subkategori) {
+        tunjukRalat('Sila pilih kategori pertandingan.');
+        return;
+      }
+    }
+
+    btnHantar.disabled = true;
+    btnHantar.textContent = 'Menghantar...';
+
+    try {
+      const semakan = await getDocs(query(collection(db, 'pendaftaran'), where('telefon', '==', telefon)));
+      const sudahDaftar = semakan.docs.some((d) => d.data().kategori === slug);
+      if (sudahDaftar) {
+        tunjukRalat('No. telefon ini sudah berdaftar untuk kategori ini.');
+        btnHantar.disabled = false;
+        btnHantar.textContent = 'Hantar Pendaftaran';
+        return;
+      }
+
+      const data = {
+        nama,
+        telefon,
+        kategori: slug,
+        status: 'belum bayar',
+        dibuat_pada: serverTimestamp(),
+      };
+      if (subkategori) data.subkategori = subkategori;
+
+      const docRef = await addDoc(collection(db, 'pendaftaran'), data);
+      location.href = `berjaya.html?id=${docRef.id}`;
+    } catch (err) {
+      console.error(err);
+      tunjukRalat('Pendaftaran gagal dihantar. Sila cuba sekali lagi.');
+      btnHantar.disabled = false;
+      btnHantar.textContent = 'Hantar Pendaftaran';
+    }
+  });
+</script>
+
+</body>
+</html>
