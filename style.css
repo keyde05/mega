@@ -101,7 +101,7 @@ a{ color:var(--accent); }
   font-size:clamp(34px, 7vw, 58px);
   line-height:.96;
   letter-spacing:.01em;
-  background:linear-gradient(100deg, #C7C9CF 0%, #C7C9CF 44%, #FFFFFF 50%, #C7C9CF 56%, #C7C9CF 100%);
+  background:linear-gradient(100deg, #E6E7EB 0%, #E6E7EB 44%, #FFFFFF 50%, #E6E7EB 56%, #E6E7EB 100%);
   background-size:250% 100%;
   -webkit-background-clip:text;
   background-clip:text;
@@ -133,13 +133,57 @@ a{ color:var(--accent); }
   animation: fade-up .5s .34s ease both;
 }
 
+/* hero + kad kira detik */
+.hero-grid{ display:grid; grid-template-columns:minmax(0,1fr) 270px; gap:28px; align-items:center; }
+@media (max-width:760px){ .hero-grid{ grid-template-columns:1fr; gap:22px; } }
+
+.hero-card{
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column; gap:4px;
+  padding:22px 22px 20px;
+  border-radius:16px;
+  border:1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+  background:linear-gradient(160deg, var(--surface-2), var(--surface));
+  box-shadow:var(--shadow), 0 0 44px -18px color-mix(in srgb, var(--accent) 60%, transparent);
+  animation: fade-up .55s .3s ease both;
+}
+.hero-card::before{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(115deg, rgba(255,255,255,.04) 0, rgba(255,255,255,.04) 1px, transparent 1px, transparent 16px);
+}
+.hero-card > *{ position:relative; }
+.hero-card-label{
+  margin:0; font-family:'Rajdhani', sans-serif; font-weight:600; font-size:13px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--accent);
+}
+.hero-card-count{
+  margin:2px 0 0; display:flex; align-items:baseline; gap:10px;
+  font-family:'Rajdhani', sans-serif; font-weight:700; font-size:64px; line-height:.95;
+  font-variant-numeric:tabular-nums;
+  background:linear-gradient(180deg, #FFE7A3 0%, var(--accent) 55%, #B8862A 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.hero-card-count small{
+  font-size:16px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+  -webkit-text-fill-color:var(--ink-soft); color:var(--ink-soft);
+}
+.hero-card-sub{ margin:6px 0 0; font-size:13px; line-height:1.45; color:var(--ink-soft); text-wrap:balance; }
+.hero-card-sub strong{ color:var(--ink); font-weight:600; }
+
 /* ---------- section head ---------- */
-.section-head{ display:flex; flex-direction:column; gap:3px; margin-bottom:16px; }
+.page > section{ display:flex; flex-direction:column; gap:16px; }
+.section-head{ display:flex; flex-direction:column; gap:4px; margin:0; }
 .section-title{
+  display:flex; align-items:center; gap:10px;
   font-weight:700;
   text-transform:uppercase;
   font-size:22px;
   letter-spacing:.03em;
+}
+.section-title::before{
+  content:""; flex:none; width:6px; height:20px; border-radius:1px;
+  background:linear-gradient(180deg, var(--accent), #B8862A);
+  transform:skewX(-18deg);
 }
 .section-sub{ color:var(--ink-soft); font-size:14px; margin:0; }
 
@@ -164,6 +208,11 @@ a{ color:var(--accent); }
 .poster-thumb:nth-child(4){ animation-delay:.6s; }
 .poster-thumb:nth-child(5){ animation-delay:.66s; }
 .poster-thumb img{ display:block; width:100%; height:208px; object-fit:cover; }
+@media (min-width:761px){
+  .poster-gallery{ display:grid; grid-template-columns:repeat(5, 1fr); overflow:visible; padding:2px 0 0; }
+  .poster-thumb{ width:auto; }
+  .poster-thumb img{ height:auto; aspect-ratio:2 / 3; }
+}
 .poster-thumb:hover{
   transform:translateY(-4px);
   border-color:var(--accent);
@@ -284,7 +333,10 @@ a.tier-card{ text-decoration:none; color:inherit; cursor:pointer; }
 .pay-block dt{ color:var(--ink-soft); font-size:13px; }
 .pay-block dd{ margin:0; font-weight:600; font-size:14.5px; text-align:right; }
 
-.tier-note{ margin:0; font-size:13px; color:var(--ink-soft); font-style:italic; }
+.tier-note{ margin:0; font-size:13px; color:var(--ink-soft); font-style:italic; line-height:1.5; }
+
+.tier-meta{ display:flex; flex-direction:column; justify-content:flex-end; gap:10px; }
+.summary-block + .tier-note{ margin-top:-26px; padding:0 4px; }
 
 .deadline-chip{
   align-self:flex-start;
@@ -302,19 +354,35 @@ a.tier-card{ text-decoration:none; color:inherit; cursor:pointer; }
 
 .tier-cta{
   margin-top:auto;
-  padding-top:8px;
-  display:flex; align-items:center; gap:6px;
-  font-family:'Rajdhani', sans-serif; font-weight:700; font-size:14px;
-  letter-spacing:.04em; text-transform:uppercase;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  padding:11px 14px;
+  border-radius:10px;
+  border:1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  background:color-mix(in srgb, var(--accent) 10%, transparent);
+  font-family:'Rajdhani', sans-serif; font-weight:700; font-size:14.5px;
+  letter-spacing:.08em; text-transform:uppercase;
   color:var(--accent);
+  transition:background .15s ease, color .15s ease, border-color .15s ease;
 }
 .tier-cta svg{ width:15px; height:15px; transition:transform .15s ease; }
+a.tier-card:hover .tier-cta{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
 a.tier-card:hover .tier-cta svg{ transform:translateX(3px); }
+
+/* Desktop: barisan (tajuk, harga, ciri, bayaran, nota, butang) selari merentas 3 kad. */
+@supports (grid-template-rows: subgrid){
+  @media (min-width:761px){
+    .tiers{ grid-template-rows:repeat(6, auto); row-gap:0; }
+    .tier-card{ display:grid; grid-template-rows:subgrid; grid-row:span 6; row-gap:14px; }
+    .tier-card .pay-block{ margin:0; }
+    .tier-cta{ margin-top:0; align-self:end; }
+  }
+}
 
 .disclaimer{
   font-size:13px;
   color:var(--ink-soft);
-  margin:2px 2px 0;
+  margin:-4px 2px 0;
+  text-align:center;
 }
 
 /* ---------- route ---------- */
@@ -324,37 +392,49 @@ a.tier-card:hover .tier-cta svg{ transform:translateX(3px); }
   grid-template-columns:repeat(3, 1fr);
   gap:0;
   position:relative;
+  counter-reset:langkah;
 }
 .route-line::before{
   content:"";
   position:absolute;
-  top:7px; left:0; right:0;
+  top:13px; left:14px; right:0;
   height:2px;
-  background:var(--line);
+  background:linear-gradient(90deg, var(--accent), var(--line) 70%);
 }
 .route-line li{
   position:relative;
-  padding:24px 18px 0 0;
+  counter-increment:langkah;
+  padding:42px 18px 0 0;
   display:flex; flex-direction:column; gap:4px;
 }
 .route-line .dot{
   position:absolute; top:0; left:0;
-  width:16px; height:16px;
+  width:28px; height:28px;
   border-radius:50%;
-  background:var(--surface);
-  border:3px solid var(--accent);
+  display:grid; place-items:center;
+  background:var(--bg);
+  border:2px solid var(--accent);
+  box-shadow:0 0 0 4px var(--bg);
+}
+.route-line .dot::before{
+  content:counter(langkah);
+  font-family:'Rajdhani', sans-serif; font-weight:700; font-size:14px; line-height:1;
+  color:var(--accent);
 }
 .route-line h3{
   font-weight:600; font-size:17px; letter-spacing:.01em; text-transform:uppercase;
 }
 .route-line p{ margin:0; font-size:14px; color:var(--ink-soft); line-height:1.45; }
-.route-line .time{ font-weight:600; color:var(--ink); font-size:13.5px; }
+.route-line .time{
+  margin-top:2px; font-family:'Rajdhani', sans-serif; font-weight:700; font-size:16px;
+  letter-spacing:.02em; color:var(--accent);
+}
 
 @media (max-width:640px){
-  .route-line{ grid-template-columns:1fr; gap:22px; }
-  .route-line::before{ top:0; bottom:0; left:7px; right:auto; width:2px; height:auto; }
-  .route-line li{ padding:0 0 0 26px; }
-  .route-line .dot{ top:2px; left:0; }
+  .route-line{ grid-template-columns:1fr; gap:24px; }
+  .route-line::before{ top:14px; bottom:14px; left:13px; right:auto; width:2px; height:auto; background:linear-gradient(180deg, var(--accent), var(--line)); }
+  .route-line li{ padding:0 0 0 46px; }
+  .route-line .dot{ top:0; left:0; }
 }
 
 /* ---------- deadline banner ---------- */
@@ -524,7 +604,6 @@ footer.credit{ text-align:center; font-size:12.5px; color:var(--ink-soft); }
 .top-bar{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
 
 .stat-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
-@media (max-width:600px){ .stat-grid{ grid-template-columns:1fr; } }
 .stat-tile{
   background:var(--surface); border:1px solid var(--line); border-radius:12px;
   padding:16px 18px; display:flex; flex-direction:column; gap:4px;
@@ -539,6 +618,14 @@ footer.credit{ text-align:center; font-size:12.5px; color:var(--ink-soft); }
 }
 .stat-tile.accent .stat-value{ color:var(--accent); }
 .stat-tile.paid .stat-value{ color:var(--paid); }
+
+/* Telefon: kekal 3 jubin sebaris (padat) -- bukan 3 kotak tinggi bertindan. */
+@media (max-width:600px){
+  .stat-grid{ gap:10px; }
+  .stat-tile{ padding:12px 12px 10px; }
+  .stat-tile .stat-label{ font-size:11px; letter-spacing:.04em; line-height:1.2; }
+  .stat-tile .stat-value{ font-size:26px; }
+}
 
 .filter-tabs{ display:flex; flex-wrap:wrap; gap:8px; }
 .filter-tabs a{
@@ -561,7 +648,9 @@ table.reg-table{ width:100%; border-collapse:collapse; min-width:600px; }
   background:var(--surface-2);
 }
 .reg-table tbody tr:last-child td{ border-bottom:none; }
-.reg-table td.nama{ white-space:normal; font-weight:600; }
+.reg-table th:first-child, .reg-table td:first-child{ width:64px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+.reg-table td.nama{ white-space:normal; font-weight:600; color:var(--ink); }
+.reg-table tbody tr:hover{ background:rgba(255,255,255,.025); }
 .reg-table tr.is-you{ background:color-mix(in srgb, var(--accent) 10%, transparent); }
 
 /* Bawah 640px, table jadi senarai kad -- lebih senang dibaca berbanding scroll sisi. */
@@ -580,6 +669,7 @@ table.reg-table{ width:100%; border-collapse:collapse; min-width:600px; }
   .reg-table td.nama{
     font-family:'Rajdhani', sans-serif; font-weight:700; font-size:18px; padding-bottom:8px;
   }
+  .reg-table td.nama:last-child{ padding-bottom:0; }
   .reg-table td[data-label]{ display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:13.5px; }
   .reg-table td[data-label]::before{
     content:attr(data-label);
