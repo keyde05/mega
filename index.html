@@ -19,21 +19,29 @@
     </span>
   </a>
 
-  <header class="hero">
-    <p class="eyebrow">Acara Konvoi Proton</p>
-    <h1>Mega Proton Attack</h1>
-    <div class="meta-row">
-      <span class="meta-pill">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/></svg>
-        Port Dickson
-      </span>
-      <span class="meta-pill">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg>
-        7&ndash;8 November
-      </span>
-    </div>
-    <p class="hero-desc">Pendaftaran kehadiran, kategori terbuka dan pakej kombo untuk konvoi Mega Proton Attack menuju Port Dickson. Klik kategori untuk daftar.</p>
-  </header>
+  <div class="hero-grid">
+    <header class="hero">
+      <p class="eyebrow">Acara Konvoi Proton</p>
+      <h1>Mega Proton Attack</h1>
+      <div class="meta-row">
+        <span class="meta-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/></svg>
+          Port Dickson
+        </span>
+        <span class="meta-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg>
+          7&ndash;8 November
+        </span>
+      </div>
+      <p class="hero-desc">Pendaftaran kehadiran, kategori terbuka dan pakej kombo untuk konvoi Mega Proton Attack menuju Port Dickson. Klik kategori untuk daftar.</p>
+    </header>
+
+    <aside class="hero-card" aria-label="Kira detik ke Grand Finale">
+      <p class="hero-card-label">Grand Finale</p>
+      <p class="hero-card-count"><span id="hari-lagi">&ndash;</span><small id="hari-unit">hari lagi</small></p>
+      <p class="hero-card-sub"><strong>8 November 2026</strong><br>Perkarangan Pantai Batu 1, Port Dickson</p>
+    </aside>
+  </div>
 
   <section aria-label="Poster rasmi">
     <div class="section-head">
@@ -81,7 +89,9 @@
           <div class="row"><dt>Nama</dt><dd>Faiz</dd></div>
           <div class="row"><dt>No. Akaun</dt><dd class="mono">1628 9802 3347</dd></div>
         </dl>
-        <span class="deadline-chip">Tutup 8 Nov, 12pm</span>
+        <div class="tier-meta">
+          <span class="deadline-chip">Tutup 8 Nov, 12pm</span>
+        </div>
         <span class="tier-cta">
           Daftar
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
@@ -99,8 +109,10 @@
           <div class="row"><dt>Nama</dt><dd>Danish</dd></div>
           <div class="row"><dt>No. Akaun</dt><dd class="mono">155135248615</dd></div>
         </dl>
-        <p class="tier-note">Hantar resit selepas bayaran.</p>
-        <span class="deadline-chip">Tutup 8 Nov, 12pm</span>
+        <div class="tier-meta">
+          <p class="tier-note">Hantar resit selepas bayaran.</p>
+          <span class="deadline-chip">Tutup 8 Nov, 12pm</span>
+        </div>
         <span class="tier-cta">
           Daftar
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
@@ -125,8 +137,10 @@
           <div class="row"><dt>Nama</dt><dd>Mierul</dd></div>
           <div class="row"><dt>No. Akaun</dt><dd class="mono">9153153759</dd></div>
         </dl>
-        <p class="tier-note">Jika nak sijil, sila isi nama di Kehadiran Basic dan terus buat pembayaran.</p>
-        <span class="deadline-chip">Tutup 9 Okt</span>
+        <div class="tier-meta">
+          <p class="tier-note">Jika nak sijil, sila isi nama di Kehadiran Basic dan terus buat pembayaran.</p>
+          <span class="deadline-chip">Tutup 9 Okt</span>
+        </div>
         <span class="tier-cta">
           Daftar
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
@@ -242,6 +256,22 @@
   document.getElementById('lightbox-close').addEventListener('click', tutupLightbox);
   lightbox.addEventListener('click', (e) => { if (e.target === lightbox) tutupLightbox(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') tutupLightbox(); });
+
+  // Kira detik ke Grand Finale (8 November 2026, 8 pagi hingga 7 malam waktu Malaysia).
+  (function () {
+    const mula = new Date('2026-11-08T08:00:00+08:00').getTime();
+    const tamat = new Date('2026-11-08T19:00:00+08:00').getTime();
+    const kini = Date.now();
+    const nilai = document.getElementById('hari-lagi');
+    const unit = document.getElementById('hari-unit');
+    if (kini < mula) {
+      nilai.textContent = Math.ceil((mula - kini) / 86400000);
+      unit.textContent = 'hari lagi';
+    } else {
+      nilai.textContent = kini < tamat ? 'Hari ini' : 'Selesai';
+      unit.textContent = '';
+    }
+  })();
 </script>
 
 <script type="module">
@@ -251,6 +281,14 @@
 
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+  }
+
+  // Paparan sahaja (data dalam pangkalan tak diubah): "MOHAMAD BIN ALI" / "apis rawang" -> "Mohamad bin Ali" / "Apis Rawang".
+  const KATA_KECIL = new Set(['bin', 'binti', 'bte', 'bt', 'b', 'a/l', 'a/p', 'al', 'ap']);
+  function kemasNama(nama) {
+    return String(nama).trim().toLowerCase().split(/\s+/).map((kata, i) =>
+      i > 0 && KATA_KECIL.has(kata) ? kata : kata.replace(/(^|[-'/.])(\p{L})/gu, (_, sep, huruf) => sep + huruf.toUpperCase())
+    ).join(' ');
   }
 
   // Kombo termasuk kehadiran asas, jadi kalau no. telefon sama muncul untuk sijil
@@ -317,7 +355,7 @@
     badanJadual.innerHTML = dipaparkan.map((row, i) => `
       <tr>
         <td>${i + 1}</td>
-        <td class="nama">${escapeHtml(row.nama)}</td>
+        <td class="nama">${escapeHtml(kemasNama(row.nama))}</td>
       </tr>
     `).join('');
   }
