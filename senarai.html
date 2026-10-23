@@ -109,12 +109,12 @@
 
     onSnapshot(q, (snapshot) => {
       const semua = snapshot.docs;
-      const dahBayarKira = semua.filter((d) => d.data().status === 'dah bayar').length;
-      statJumlah.textContent = semua.length;
-      statDahBayar.textContent = dahBayarKira;
-      statBelumBayar.textContent = semua.length - dahBayarKira;
-
       const dipaparkan = semua.filter((d) => kumpulan[filter].slugs.includes(d.data().kategori));
+
+      const dahBayarKira = dipaparkan.filter((d) => d.data().status === 'dah bayar').length;
+      statJumlah.textContent = dipaparkan.length;
+      statDahBayar.textContent = dahBayarKira;
+      statBelumBayar.textContent = dipaparkan.length - dahBayarKira;
 
       if (dipaparkan.length === 0) {
         badanJadual.innerHTML = '<tr><td colspan="7" class="empty-state">Tiada pendaftaran lagi.</td></tr>';
